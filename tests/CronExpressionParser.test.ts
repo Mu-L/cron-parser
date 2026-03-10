@@ -1591,6 +1591,32 @@ describe('CronExpressionParser', () => {
       expect([2, 3]).toContain(prev.getHours());
       expect(prev.getMinutes()).toEqual(0);
     });
+
+    test('does not overshoot target hour on spring-forward DST day (forward)', () => {
+      const options: CronExpressionOptions = {
+        tz: 'America/Chicago',
+        currentDate: new Date('2026-03-08T05:45:00.000Z'), // 11:45 PM CST Sat Mar 7
+      };
+
+      const interval = CronExpressionParser.parse('0 8 * * 0', options);
+      const next = interval.next();
+
+      expect(next).toBeInstanceOf(CronDate);
+      expect(next.toISOString()).toEqual('2026-03-08T13:00:00.000Z'); // 8am CDT Sun Mar 8
+    });
+
+    test('does not overshoot target hour on spring-forward DST day (reverse)', () => {
+      const options: CronExpressionOptions = {
+        tz: 'America/Chicago',
+        currentDate: new Date('2026-03-08T23:00:00.000Z'), // 6pm CDT Sun Mar 8
+      };
+
+      const interval = CronExpressionParser.parse('0 8 * * 0', options);
+      const prev = interval.prev();
+
+      expect(prev).toBeInstanceOf(CronDate);
+      expect(prev.toISOString()).toEqual('2026-03-08T13:00:00.000Z'); // 8am CDT Sun Mar 8
+    });
   });
 
   describe('test expressions with "L" last of flag', () => {
